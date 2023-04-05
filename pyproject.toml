@@ -1,0 +1,70 @@
+[tool.poetry]
+name = "xurls"
+version = "1.1.1"
+description = "Python URL Library"
+authors = ["Josh Orr <josh@orr.blue>"]
+packages = [{include = "xurls"}]
+readme = "Readme.md"
+license = "The Unlicense (Unlicense)"
+repository = "https://github.com/xyngular/py-xurls"
+
+[tool.poetry.dependencies]
+python = "~3.8"
+xsentinels = "^1.2.1"
+
+[tool.poetry.dev-dependencies]
+ipdb = "^0.13.9"
+autopep8 = "^1.5.7"
+pycodestyle = "^2.7.0"
+pdoc3 = "^0"
+pylint = "^2.9.5"
+pytest = "^6.2.4"
+pytest-cov = "^2.12.1"
+pytest-mock = "^3.6.1"
+pytest-pycodestyle = "^2.2.0"
+black = {version = "*", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+url = "https://pypi.fury.io/xyngular"
+name = "gemfury"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+
+# By default, reuse db schema
+# (speeds up unit test starts after first unit test run)
+# If test-db schmea gets messed up, drop `--reuse-db`
+# and it will recreate db next time you run unit tests.
+addopts = "--verbose --pycodestyle"
+
+testpaths = ["tests", "xurls"]
+python_files = "tests.py test_*.py *_tests.py tests/*"
+norecursedirs = "lib/* tests/scripts .serverless .eggs dist/* node_modules"
+
+[tool.black]
+line-length = 99
+skip-string-normalization = 1
+target_version = ['py38']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
