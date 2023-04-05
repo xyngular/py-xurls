@@ -18,20 +18,20 @@ At some point in the future, I will probably support formatting placeholders for
 a query value. For now, it's only for the path.
 
 Here is an example:
-`"http://api.xyngular.com/v1/accounts/{id}"`
+`"http://api.com/v1/accounts/{id}"`
 
 If later on, we add a query like this to the URL:
 `URLMutable.query_add`('id', 1)
 
 And then call `url.url()`, we will get back this:
-`"http://api.xyngular.com/v1/accounts/1"`
+`"http://api.com/v1/accounts/1"`
 
 You can also pass in a secondary/backup list of key/values into the .url(...) method,
 like so:
 
->>> url = URL("https://api.xyngular.com/some/endpoint/{id}")
+>>> url = URL("https://api.com/some/endpoint/{id}")
 >>> url.url(secondary_values={'id': 9})
-"https://api.xyngular.com/some/endpoint/9"
+"https://api.com/some/endpoint/9"
 
 It can also be an object, which in this case it will look for an attribute of `id`.
 
@@ -76,6 +76,7 @@ from urllib import parse as urlparser
 from types import MappingProxyType
 from dataclasses import dataclass
 import string
+from xloop import xloop
 
 # I'm not going to worry about url 'parameters' for now,
 # URL parameter example:  "http://www.google.com/some_path;paramA=value1;paramB=value2"
@@ -104,8 +105,8 @@ class _FormattedQueryValue:
     already have that suffix.
 
     .. note:: Thinking about putting in an ability to change the default formatter via a
-        `xynlib.context.Resource`. That way it could easily be overridden via a
-        `xynlib.context.Context`.  I'll do that if/when we need it.
+        `xinject.context.Resource`. That way it could easily be overridden via a
+        `xinject.context.Context`.  I'll do that if/when we need it.
         For now the default _FormattedQueryValue is just a plain instance that is shared
         via a private module attribute.
     """
@@ -432,7 +433,7 @@ class URL(object):
         any that were provided in `url` string. Same goes with the 'path'.
         Use 'append_url(...)' to easily merge/append query/paths together.
 
-        If `xynlib.types.Default` is left in place, then that value will be ignored and not replace
+        If `xsentinels.Default` is left in place, then that value will be ignored and not replace
         anything that was parsed for that component from `url` string. Unless the 'url'
         pass in defined that particular component it will be set to None. When you append
         a URL on another with values set to None, it will not 'append' them into the URL.
@@ -915,7 +916,7 @@ class URL(object):
 
             existing_value = query.get(k)
             if existing_value:
-                all_values.extend(_loop(existing_value))
+                all_values.extend(xloop(existing_value))
 
             if force_list or len(all_values) > 1:
                 query[k] = all_values
@@ -931,7 +932,7 @@ class URL(object):
         options = self.formatting_options or DefaultQueryValueListFormat
         query_filtered = {}
         for key, val in query.items():
-            values = list(_loop(val))
+            values = list(xloop(val))
 
             if not values:
                 continue
@@ -961,7 +962,7 @@ class URL(object):
                 that support multiple objects. It's just not needed right now. But the interface
                 allows for it in the future, when we get around to support it.
 
-                If left as `xynlib.types.Default` then we will use self.secondary_values,
+                If left as `xsentinels.Default` then we will use self.secondary_values,
                 if any are there. You can 'attach' secondary values to a URL via:
 
                 >>> URLMutable.is_valid(secondary_values={'id': 2}, attach_values=True)
@@ -994,7 +995,7 @@ class URL(object):
             # TODO:  ********
 
             if not isinstance(query_value, str):
-                query_value = list(_loop(query_value))
+                query_value = list(xloop(query_value))
 
                 if len(query_value) == 1:
                     query_value = query_value[0]
@@ -1015,7 +1016,7 @@ class URL(object):
                 elif isinstance(secondary_values, dict):
                     obj_value = secondary_values.get(k)
                 else:
-                    all_objs = list(_loop(secondary_values))
+                    all_objs = list(xloop(secondary_values))
                     if len(all_objs) == 1 and hasattr(all_objs[0], k):
                         obj_value = getattr(all_objs[0], k)
                     else:
@@ -1284,7 +1285,7 @@ class URLMutable(URL):
 
         `self` is returned, so you can chain this with other method calls.
         """
-        self._set_methods(_loop(methods, args))
+        self._set_methods(xloop(methods, args))
         return self
 
     def set_singular(self, value: Optional[bool]) -> URLMutable:
@@ -1421,31 +1422,6 @@ class URLMutable(URL):
         """
         self._query.pop(key, None)
         return self
-
-
-def _loop(*args: Union[Iterable[T], T]) -> Iterator[T]:
-    """
-    Copied from xynlib.generators.loop to here to eliminate the dependency
-    """
-    # Reminder: 'anything' is all positional arguments passed into method.
-    if not args:
-        return
-
-    yield_for = (str, int, bytes, dict)
-
-    for arg in args:
-        if arg is None:
-            continue
-        if isinstance(arg, yield_for):
-            yield arg
-            continue
-        try:
-            arg_iter = iter(arg)
-        except TypeError:
-            yield arg
-        else:
-            for item in arg_iter:
-                yield item
 
 
 # Basically, we have to set every attribute except query/path/methods.

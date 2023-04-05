@@ -1034,6 +1034,18 @@ files = [
 ]
 
 [[package]]
+name = "xloop"
+version = "1.0.1"
+description = "General purpose for/iterator looping generators/utilities."
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "xloop-1.0.1-py3-none-any.whl", hash = "sha256:e24aa87d664d5985c8ad7cdeecbc91313066ea3f1894cead9719b011362da6eb"},
+    {file = "xloop-1.0.1.tar.gz", hash = "sha256:bb639738edfcaa8d8fe89befaab7eae5f53caa7cef5ac5c836f3545de60dcd28"},
+]
+
+[[package]]
 name = "xsentinels"
 version = "1.2.1"
 description = "Sentinels for Defaults, Null and for creating sentinels/singletons."
@@ -1067,4 +1079,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "8cd4856bc28acc589c5ef73160ef2afd657e55721ab2b35edafb3b183fbb61e2"
+content-hash = "de96d95296ce7088380b26d3b3a641b41f6a980ad0cb817e7c71bde064fec673"

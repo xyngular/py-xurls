@@ -11,6 +11,7 @@ repository = "https://github.com/xyngular/py-xurls"
 [tool.poetry.dependencies]
 python = "^3.8"
 xsentinels = "^1.2.1"
+xloop = "^1.0.1"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.9"
