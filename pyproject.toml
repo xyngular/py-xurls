@@ -4,12 +4,12 @@ version = "1.1.1"
 description = "Python URL Library"
 authors = ["Josh Orr <josh@orr.blue>"]
 packages = [{include = "xurls"}]
-readme = "Readme.md"
+readme = "README.md"
 license = "The Unlicense (Unlicense)"
 repository = "https://github.com/xyngular/py-xurls"
 
 [tool.poetry.dependencies]
-python = "~3.8"
+python = "^3.8"
 xsentinels = "^1.2.1"
 
 [tool.poetry.dev-dependencies]
@@ -19,7 +19,6 @@ pycodestyle = "^2.7.0"
 pdoc3 = "^0"
 pylint = "^2.9.5"
 pytest = "^6.2.4"
-pytest-cov = "^2.12.1"
 pytest-mock = "^3.6.1"
 pytest-pycodestyle = "^2.2.0"
 black = {version = "*", allow-prereleases = true}
@@ -28,9 +27,6 @@ black = {version = "*", allow-prereleases = true}
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[[tool.poetry.source]]
-url = "https://pypi.fury.io/xyngular"
-name = "gemfury"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
