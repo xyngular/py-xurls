@@ -23,11 +23,20 @@ pytest = "^6.2.4"
 pytest-mock = "^3.6.1"
 pytest-pycodestyle = "^2.2.0"
 black = {version = "*", allow-prereleases = true}
+boto3-stubs = { extras = ["essential"], version = "*" }
+mkdocstrings = { extras = ["python"], version = "^0" }
+mkdocs-autorefs = "^0"
+mkdocs-git-revision-date-plugin = "^0"
+mkdocs = "^1.4.2"
+mkdocs-material = "^9.0.12"
+mike = "^1.1.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.custom.xpublish]
+extra-module-docs = ['xsentinels', 'xloop']
 
 [tool.pytest.ini_options]
 minversion = "6.0"
