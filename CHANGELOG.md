@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/xyngular/py-xurls/compare/v0.1.1...v0.2.0) (2023-04-06)
+
+
+### Features
+
+* add docs ([18595a4](https://github.com/xyngular/py-xurls/commit/18595a4d9985265c716fc840377027b8003576e2))
+
 ## [0.1.1](https://github.com/xyngular/py-xurls/compare/v0.1.0...v0.1.1) (2023-04-05)
 
 

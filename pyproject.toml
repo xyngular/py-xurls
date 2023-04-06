@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xurls"
-version = "0.1.1"
+version = "0.2.0"
 description = "Python URL Library"
 authors = ["Josh Orr <josh@orr.blue>"]
 packages = [{include = "xurls"}]
