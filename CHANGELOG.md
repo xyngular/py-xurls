@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/xyngular/py-xurls/compare/v0.2.0...v0.2.1) (2023-04-15)
+
+
+### Bug Fixes
+
+* license ([9986365](https://github.com/xyngular/py-xurls/commit/998636537d50f474946a95ff8d035ae61df58144))
+
+
+### Documentation
+
+* add doc links. ([39aa99e](https://github.com/xyngular/py-xurls/commit/39aa99eb1671356ca75ac1ae39be8f656e6b2967))
+
 ## [0.2.0](https://github.com/xyngular/py-xurls/compare/v0.1.1...v0.2.0) (2023-04-06)
 
 
