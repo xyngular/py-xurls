@@ -5,8 +5,11 @@ description = "Python URL Library"
 authors = ["Josh Orr <josh@orr.blue>"]
 packages = [{include = "xurls"}]
 readme = "README.md"
-license = "The Unlicense (Unlicense)"
 repository = "https://github.com/xyngular/py-xurls"
+classifiers = [
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: The Unlicense (Unlicense)"
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
