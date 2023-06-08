@@ -331,7 +331,7 @@ HTTPPost = 'POST'
 HTTPPut = 'PUT'
 
 
-class URL(object):
+class FrozenUrl(object):
     """
     Allows you to easily create, work with and append URLs together.
 
@@ -1109,7 +1109,7 @@ URLStr = Union[str, URL, None]
 
 
 # noinspection PyMethodOverriding
-class URLMutable(URL):
+class Url(FrozenUrl):
     """
     Class represents a URL split into the basic URL components. See `URL` class for more basic
     details.  This version of URL allows you to easily mutate/change a URL by calling methods
