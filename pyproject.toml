@@ -12,7 +12,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 xsentinels = "^1.2.1"
 xloop = "^1.0.1"
 
