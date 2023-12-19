@@ -868,9 +868,47 @@ class Url:
         default_scheme: str = None,
         secondary_values: SecondaryValues = Default,
         allow_invalid_url: bool = False,
+    ):
+        warn(
+            "Url.url is deprecated, instead use `Url.format` "
+            "or directly convert url object to a str.",
+            DeprecationWarning, 2
+        )
+
+        return self.format(
+            default_scheme=default_scheme,
+            secondary_values=secondary_values,
+            allow_invalid_url=allow_invalid_url
+        )
+
+    def format(
+        self,
+        *,
+        default_scheme: str = None,
+        secondary_values: SecondaryValues = Default,
+        allow_invalid_url: bool = False,
     ) -> Optional[str]:
         """
         Returns url as a string, with an optional `default_scheme`.
+
+        You can get the same value (with all args left at their default values)
+        by simply converting object to a string:
+
+        ```python
+        some_url = Url("https://www.some-url.com/")
+
+        # Ways to convert to string:
+        print(some_url.format())
+        print(str(some_url))
+        print(f'Formatted Url: {some_url}')
+        ```
+
+        Output:
+        ```
+        https://www.some-url.com/
+        https://www.some-url.com/
+        Formatted Url: https://www.some-url.com/
+        ```
 
         Path's can have variable placeholders in them, for more details see
         [Path Formatting Placeholders](#path-formatting-placeholders)
