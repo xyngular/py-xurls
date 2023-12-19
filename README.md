@@ -26,9 +26,9 @@ pip install xurls
 Very basic example:
 
 ```python
-from xurls import URLMutable
+from xurls import Url
 
-url = URLMutable("http://www.google.com/some/path")
+url = Url("http://www.google.com/some/path")
 assert url.host == "www.google.com"
 
 url.host = "apple.com"
