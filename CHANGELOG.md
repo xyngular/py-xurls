@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.0](https://github.com/xyngular/py-xurls/compare/v0.2.1...v1.0.0) (2023-12-19)
+
+
+### Features
+
+* add deprecation warnings + code formatting fixes. ([8f3e5d9](https://github.com/xyngular/py-xurls/commit/8f3e5d93a1dfb1144858ef56a438c77f266125fd))
+* adjust tests to accommodate new Url class name. ([18bdd92](https://github.com/xyngular/py-xurls/commit/18bdd926fc28f60a842db4eaffb86cbd51678dca))
+* deprecate the `Url.url` method, added `Url.format` as a replacement. ([9097016](https://github.com/xyngular/py-xurls/commit/90970168df672d6daafdd4fd23af4a4440f0ae25))
+* Release version 1.0 ([1f8f596](https://github.com/xyngular/py-xurls/commit/1f8f596ca840eb71deb57602e4e4df0ba411ca97))
+* remove frozen_url, may add back in someday but for now keep things simple and only have a single url class. ([1058df1](https://github.com/xyngular/py-xurls/commit/1058df154acf5bef0d7dc82c3c524e721bf44783))
+* renamed URLMutable class to `Url`; removed `URL`; may make a FrozenUrl someday, but for now keeping it simple. ([6445bd8](https://github.com/xyngular/py-xurls/commit/6445bd8d668919ad0d572544df9f0af9a236fc24))
+* update README with newer class names with slightly better examples. ([4f9993f](https://github.com/xyngular/py-xurls/commit/4f9993f752baef942eb5b3f9b008d116ae1feadb))
+
 ## [0.2.1](https://github.com/xyngular/py-xurls/compare/v0.2.0...v0.2.1) (2023-04-15)
 
 
