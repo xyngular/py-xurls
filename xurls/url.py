@@ -1,11 +1,10 @@
 """
-Helper classes to work with URL's.
+Helper classes to work with Url's.
 
-Allows you to easily create, work with and append URLs together.
+Allows you to easily create, work with and append Urls together.
 
 Main classes:
-- `URL`
-- `URLMutable`
+- `Url`
 
 ## Path Formatting Placeholders:
 [path-formatting-placeholders]: #path-formatting-placeholders
@@ -20,8 +19,8 @@ a query value. For now, it's only for the path.
 Here is an example:
 `"http://api.com/v1/accounts/{id}"`
 
-If later on, we add a query like this to the URL:
-`URLMutable.query_add`('id', 1)
+If later on, we add a query like this to the Url:
+`Url.query_add`('id', 1)
 
 And then call `url.url()`, we will get back this:
 `"http://api.com/v1/accounts/1"`
@@ -29,26 +28,26 @@ And then call `url.url()`, we will get back this:
 You can also pass in a secondary/backup list of key/values into the .url(...) method,
 like so:
 
->>> url = URL("https://api.com/some/endpoint/{id}")
+>>> url = Url("https://api.com/some/endpoint/{id}")
 >>> url.url(secondary_values={'id': 9})
 "https://api.com/some/endpoint/9"
 
 It can also be an object, which in this case it will look for an attribute of `id`.
 
-`URL.url` will return `None` if it can't construct the URL due to an absent format
-value that it can't find. In this way, you could have a list of URL's and the first
+`Url.url` will return `None` if it can't construct the Url due to an absent format
+value that it can't find. In this way, you could have a list of Url's and the first
 one that can be formatted is the one you use.
 
-You can also use `URL.is_valid` to see if the url is valid in a more efficent way,
+You can also use `Url.is_valid` to see if the url is valid in a more efficent way,
 as it won't need to format the full url to determine this.
 
 Value for formatting placeholders come from these sources:
 
-1. First look in URL's query values (`URL.query`), looking for a value with same key-name.
-3. We next look in any secondary_values passed into the `URL.url` method for the value
+1. First look in Url's query values (`Url.query`), looking for a value with same key-name.
+3. We next look in any secondary_values passed into the `Url.url` method for the value
     we need if not found in query-value.
 2. Finally, we will fallback attached values, you can attach values to a mutable url
-    via `URLMutable.is_valid`; see doc-comment in that method for more details.
+    via `Url.is_valid`; see doc-comment in that method for more details.
 
 .. todo:: At some point in the future I'll probably support place-holders for
     query-key/values.  The `format_placeholders` argument would also control
@@ -76,10 +75,12 @@ from urllib import parse as urlparser
 from types import MappingProxyType
 from dataclasses import dataclass
 import string
+from warnings import warn
+
 from xloop import xloop
 
 # I'm not going to worry about url 'parameters' for now,
-# URL parameter example:  "http://www.google.com/some_path;paramA=value1;paramB=value2"
+# Url parameter example:  "http://www.google.com/some_path;paramA=value1;paramB=value2"
 from xsentinels import Default
 
 T = TypeVar("T")
@@ -91,8 +92,8 @@ class _FormattedQueryValue:
     """
     Formats query values into the final formatted string.
 
-    `_FormattedQueryValue.url_query` is what `URL` calls when it needs to format it's self
-    into a string via `URL.url`. It will be called on the first item (or only item) if it's
+    `_FormattedQueryValue.url_query` is what `Url` calls when it needs to format it's self
+    into a string via `Url.url`. It will be called on the first item (or only item) if it's
     a _FormattedQueryValue type value.  If it's not, it will use a plain/default instance of
     `_FormattedQueryValue`.
 
@@ -100,8 +101,8 @@ class _FormattedQueryValue:
     for each value encountered (and if the original value was a list, for each item in the list).
 
     It then combines these together into a single string by a the
-    `URLFormattingOptions.list_value_delimiter` and if there is more than one value
-    adds a `URLFormattingOptions.list_key_suffix` to the end of key if the key does not
+    `UrlFormattingOptions.list_value_delimiter` and if there is more than one value
+    adds a `UrlFormattingOptions.list_key_suffix` to the end of key if the key does not
     already have that suffix.
 
     .. note:: Thinking about putting in an ability to change the default formatter via a
@@ -112,16 +113,16 @@ class _FormattedQueryValue:
     """
 
     def url_query(
-        self, *, key: str, url: URL, url_options: URLFormattingOptions, values: List[Any]
+        self, *, key: str, url: Url, url_options: UrlFormattingOptions, values: List[Any]
     ) -> Query:
         """
         If `_FormattedQueryValue` encountered as a query value as the first or only value while
-        trying to convert a URL to a string we will call `url_query` on that value.
+        trying to convert a Url to a string we will call `url_query` on that value.
 
         If the first item is not a `_FormattedQueryValue` (such as a plain `str`) then and instance
         of this class (not a sub-class) will be directly used for format the query value into
-        what is needed in final formatted URL by returning a dict of the needed key/str-values
-        to append to final formatted URL.
+        what is needed in final formatted Url by returning a dict of the needed key/str-values
+        to append to final formatted Url.
 
         It's expected this will return a dict with whatever key/values are needed to
         represent the value in a url query.
@@ -136,15 +137,15 @@ class _FormattedQueryValue:
 
         Args:
             key (str): Key that is currently being used for the query name for our value (self).
-            url (URL): URL that is being formatted, so you can examine it if needed
-            url_options (URLFormattingOptions): Options that are being used to format the url.
-            values (List[Any]): A list of the query values as orginally set into the URL;
+            url (Url): Url that is being formatted, so you can examine it if needed
+            url_options (UrlFormattingOptions): Options that are being used to format the url.
+            values (List[Any]): A list of the query values as orginally set into the Url;
                 this means the values can be anything.
         Returns:
             A dictionary with whatever key/values you need.  Keep in mind that if the key
             name(s) returned conflict with other keys, only one will be selected and the others
             ignored, depending on the order the original options were defined in. Values with
-            new keys added to the original URL's query later will take priority over earlier ones.
+            new keys added to the original Url's query later will take priority over earlier ones.
 
             Example:
 
@@ -152,7 +153,7 @@ class _FormattedQueryValue:
             ...     def url_query(self, *args, **kwargs):
             ...         return {'key-1': 'hello!'}
             >>>
-            >>> my_url = URLMutable()
+            >>> my_url = Url()
             >>> my_url.query_add('key-1', "my-value")
             >>> my_url.query_add('key-2', MyValueType())
 
@@ -168,6 +169,7 @@ class _FormattedQueryValue:
         """
         delimiter = url_options.list_value_delimiter
         suffix = url_options.list_key_suffix
+        keep_suffixes = url_options.list_key_suffixes_to_keep
         final_items = []
 
         for item in values:
@@ -185,7 +187,14 @@ class _FormattedQueryValue:
         else:
             # If we already end with suffix, don't add it.
             if not key.endswith(suffix):
-                key = key + suffix
+                add_suffix = True
+                for s in keep_suffixes:
+                    if key.endswith(s):
+                        add_suffix = False
+                        break
+
+                if add_suffix:
+                    key = key + suffix
 
             # todo: consider raising an exception if we have blank/no delimiter.
             if delimiter:
@@ -198,18 +207,18 @@ class _FormattedQueryValue:
 
         return {key: new_val}
 
-    def url_query_value(self, *, url: URL, url_options: URLFormattingOptions, value: Any) -> str:
+    def url_query_value(self, *, url: Url, url_options: UrlFormattingOptions, value: Any) -> str:
         """
         `_FormattedQueryValue.url_query` calls this method is call for each value in the query.
         If a query item has a list with more than one values this is normally called on each
         value in that list and then combined together via url formatting options.
 
         Whatever value is returned will be incorporated into the query via the
-        URLFormattingOptions: `list_key_suffix` and `list_value_delimiter` attributes inside
+        UrlFormattingOptions: `list_key_suffix` and `list_value_delimiter` attributes inside
         `_FormattedQueryValue.url_query`.
 
         Args:
-            url: URL that is being formatted, so you can examine it if needed
+            url: Url that is being formatted, so you can examine it if needed
             url_options: Options that are being used to format the url.
             value: The specific value to format. if this value is a _FormattedQueryValue then
                 it's guaranteed that `self` will be the same as the passed in value.
@@ -240,37 +249,52 @@ QueryValue = Union[
 """ A query value can be either a str, or a list of str.
 
     If it is a list of str, then the key will have __in appended and the values will be delimited
-    by a comma ',' if URLMutable.use_in_operator_for_query_lists is True, ie: `?someKey__in=A,B`.
+    by a comma ',' if Url.use_in_operator_for_query_lists is True, ie: `?someKey__in=A,B`.
 
     Otherwise they will be duplicated, ie: `?someKey=A&someKey=B`.
 
-    If URLMutable.use_in_operator_for_query_lists is False, we instead duplicate the key
+    If Url.use_in_operator_for_query_lists is False, we instead duplicate the key
     for each value in the list in final url, ie: (1, 2) turns into: 'a_key=1&a_key=2'.
 
     use_in_operator_for_query_lists is True by default.
 """
 
 Query = Dict[str, QueryValue]
-""" Type that represents the entire query portion of a URL.
+""" Type that represents the entire query portion of a Url.
 """
 
 
-@dataclass(frozen=True)
-class URLFormattingOptions:
+@dataclass
+class UrlFormattingOptions:
+    # TODO: Allow for a configurable formatting callback function/object.
+
     list_key_suffix: str = '__in'
     """ What to strip/append to query key-name if the value is a list.
-        When parsing a URL, if the key name does not end with this, we won't try to split the value
+        When parsing a Url, if the key name does not end with this, we won't try to split the value
         by the `list_value_delimiter`, the value will be left unchanged.
 
-        When parsing a URL, the list_key_suffix will be striped from the key-name. When
-        constructing the URL into a string, list_key_suffix will be added to a key-name if the
+        When parsing a Url, the list_key_suffix will be striped from the key-name. When
+        constructing the Url into a string, list_key_suffix will be added to a key-name if the
         value is a list.
 
-        Default is '__in', which is the standard way we do this for the Xyngular API's.
+        Default is '__in', which is the standard way Django Rest Framework's filters work.
+    """
+
+    list_key_suffixes_to_keep = [
+        '__fields__include',
+        '__fields__only',
+        '__fields__exclude'
+    ]
+    """ Suffixes listed here can implicitly take a delimited list of values
+        without using the generalized `UrlFormattingOptions.list_key_suffix` (see above).
+
+        The `UrlFormattingOptions.list_key_suffix` won't be used if a key ends with one of
+        these keys, but instead the list will be directly formatted/parsed directly out of
+        the value without modifying the key.
     """
 
     list_value_delimiter: str = ','
-    """ This tells the URL the character to split query value by.
+    """ This tells the Url the character to split query value by.
 
         If there is no delimiter in value, then a list with a single value is the result.
         Keep in mind that list won't be parsed from a queries value if the queries key-name
@@ -280,27 +304,8 @@ class URLFormattingOptions:
         Default is a comma `,`.
     """
 
-    query_limit_key: str = "limit"
-    """ Name of query parameter for the 'limit', or how many objects to return in a request.
-        Defaults to 'limit', which is the Xyngular API's standard name for it.
-    """
 
-    query_limit_max: int = 15000
-    """ Maximum number of objects to request at a time. If None, and use did not specify a limit,
-        then the limit key should not be included in final URL.  If specified, then this limit
-        is always included in the final url.  If this is specified AND use also specified a limit,
-        then you cap the user specified limit to this value [per-request], until you get the total
-        number of objects the user ultimately requested.
-    """
-
-    query_limit_always_include = True
-    """ If True, then always include the query-limit when doing a GET.  Some systems will only
-        return a few records at a time unless you tell them to get more at a time by always
-        including the query limit with a higher number.
-    """
-
-
-DefaultQueryValueListFormat = URLFormattingOptions()
+DefaultQueryValueListFormat = UrlFormattingOptions()
 """ The default if `formatting_options` is None.
 
     Produces a format that does this when you have a query-key with multiple values:
@@ -310,7 +315,7 @@ DefaultQueryValueListFormat = URLFormattingOptions()
         `query_add('key-name', ['value1', 'value2'])`
 """
 
-DuplicateKeyNamesQueryValueListFormat = URLFormattingOptions(
+DuplicateKeyNamesQueryValueListFormat = UrlFormattingOptions(
     list_key_suffix='', list_value_delimiter=''
 )
 """ Produces a format that does this when you have a query-key with multiple values:
@@ -331,35 +336,73 @@ HTTPPost = 'POST'
 HTTPPut = 'PUT'
 
 
-class URL(object):
+class Url:
     """
-    Allows you to easily create, work with and append URLs together.
+    Allows you to easily create, work with and append Urls together.
 
-    You can pass a normal URL or string into the first argument of `URL.__init__`, and if you do
-    it as a string it will be parsed as a URL and it's components will be set into the
-    returned as a URL with it's various components parsed into URL's various attributes.
+    You can pass a normal Url or string into the first argument of `Url.__init__`, and if you do
+    it as a string it will be parsed as a Url and it's components will be set into the
+    returned as a Url with it's various components parsed into Url's various attributes.
 
-    There is also a parameter for each URL component attribute in the `URL.__init__` method.
+    There is also a parameter for each Url component attribute in the `Url.__init__` method.
 
     If no value is provided for a particular url component, it will be assigned a `None` value.
 
-    Use `URL.url()` method to get a url `str` back from components.
+    Use `Url.url()` method to get a url `str` back from components.
 
     For more details on path features,
     see [Path Formatting Placeholders](#path-formatting-placeholders)
+
+    ## Mutating Methods
+
+    A big way to use Url is to `Url.append_url` `Url`'s together.  You can then take
+    different `Url`'s that have different components and construct a final `Url` to use.
+
+    When appending a Url to another [via `Url.append_url`], if any particular component
+    has a None value, it will not change the Url it's being appended to for that particular
+    component. This allows you to append Urls together and only relevant/set-values will
+    be whats appended. This allows you to construct Urls based on pieces of Urls to construct
+    the final Url.
+
+    When you append a Url, the path and query and methods are treated in a special way:
+
+    - `Url.path`: it will be appended to the destination Url via
+        `Url.append_path`, and therefore, the path will be appended onto the existing
+        path (with a `/` if needed to separate them).
+
+    - `Url.query`: Keys will be added via `Url.query_add`, and therefore the only
+        keys that will be replaced are ones where the same key-name exists in both Urls.
+        Otherwise, the keys are 'added' together.
+
+    - `Url.methods`: This will get union'd with the existing `methods` in the destination
+        url.
+
+    The methods that mutate self [such as 'append_path', etc] return self, so you can chain
+    them together with other mutating methods.
+
+    Example Usages:
+    >>> urlc = Url()
+    >>> urlc.scheme = 'http'
+    >>> urlc.host = 'www.google.com'
+    >>> urlc.url()
+    "http://www.google.com"
+    >>> urlc = Url("http://www.google.com").append_url("/hello")
+    >>> urlc.url()
+    "http://www.google.com/hello"
+
     """
 
     @classmethod
     def ensure_url(
         cls: Type[T],
-        value: Optional[URLStr],
+        value: Optional[UrlStr],
         *,
-        default_formatting_options: URLFormattingOptions = Default,
+        default_formatting_options: UrlFormattingOptions = Default,
     ) -> T:
-        """Will check to see if the passed in value is a `URL` (depending on the
-            class you call `URL.ensure_url` on). If so, will return value unchanged.
+        """Will check to see if the passed in value is a `Url` (depending on the
+            class you call `Url.ensure_url` on). If so, will return value unchanged.
             This is an optimization and the reason to use this method over just constructing
-            a new `URL` and passing the value into that. If the value is already a URL
+            a new `Url` and passing the value into that. If the value is already a Url
             and it's formatting_options don't need to be set to `default_formatting_options`
             it will just return it without any extra work.
 
@@ -371,44 +414,44 @@ class URL(object):
             If you pass in a `str` to this method, then any `formatting_options` you passed in
             will be checked and used if provided.
 
-            If you pass in a URL, and it has not explicitly set formatting_options, we
-            will make a copy of passed in URL and set `default_formatting_options` on it
+            If you pass in a Url, and it has not explicitly set formatting_options, we
+            will make a copy of passed in Url and set `default_formatting_options` on it
             and return copy.
 
-            Otherwise, URL will use the usual `DefaultQueryValueListFormat` for the default format.
+            Otherwise, Url will use the usual `DefaultQueryValueListFormat` for the default format.
 
         Args:
-            value: You can pass in a URLStr (which is either a `str` or `URL`), and you will get
-                back a `URL` object from it. If the value is exactly the same as the class you call
+            value: You can pass in a UrlStr (which is either a `str` or `Url`), and you will get
+                back a `Url` object from it. If the value is exactly the same as the class you call
                 this class method on, you will get it back unchanged. If not then we create a new
                 object of type `cls` and give value to it as a init parameter.
 
-                If `value` is not a `URL` or `str`, we will try and convert it to a `str` for
+                If `value` is not a `Url` or `str`, we will try and convert it to a `str` for
                 you in an attempt to extract a url string from the passed in object.
 
-            default_formatting_options (URLFormattingOptions): Formatting options to use IF
-                passed in value is a string.  If the passed in value is a URL object, we use
-                whatever it has set on it. If no formatting options are set on the `URL` object
-                that is passed in and you pass in a default_formatting_options, we will copy
-                passed in URL and set that formatting option on it, and return copy.
+            default_formatting_options (UrlFormattingOptions): Formatting options to use IF
+                passed in value is a string.  If the passed in value is a Url object, we use
+                whatever it has set on it. If no formatting options are set on the `Url` object
+                that is passed in, and you pass in a default_formatting_options, we will copy
+                passed in Url and set that formatting option on it, and return copy.
 
         Returns:
-             URL: Object of same type as `cls`, which is the class you called `URL.ensure_url` on.
+             Url: Object of same type as `cls`, which is the class you called `Url.ensure_url` on.
         """
         if type(value) is cls and (not default_formatting_options or value.formatting_options):
             return value
 
-        if isinstance(value, URL) and value.formatting_options:
-            # URL already has explicitly set formatting-options, keep whatever it has.
+        if isinstance(value, Url) and value.formatting_options:
+            # Url already has explicitly set formatting-options, keep whatever it has.
             return cls(value)
 
-        # Otherwise, we are some other non-URL value (ie: a `str` probably),
+        # Otherwise, we are some other non-Url value (ie: a `str` probably),
         # try tp convert value to string and any default_formatting_options the user provided.
         return cls(value, formatting_options=default_formatting_options)
 
     def __init__(
         self,
-        url: Union[str, URL] = None,
+        url: Union[str, Url] = None,
         *,
         scheme: str = Default,
         username: str = Default,
@@ -418,8 +461,12 @@ class URL(object):
         path: str = Default,
         query: Query = Default,
         fragment: str = Default,
-        # Params below are extra metadata about URL that is useful to communicate about:
-        formatting_options: URLFormattingOptions = Default,
+        formatting_options: UrlFormattingOptions = Default,
+
+        # Params below are extra metadata about Url that is useful to communicate about:
+        # TODO: Find a more generalized way to include 'mergeable'/'appendable' metadata
+        #   in the Url object; For now keeping them, but need to remove in the
+        #   next major release.
         singular: bool = None,
         methods: Union[str, Iterable[str]] = None,
     ):
@@ -436,65 +483,74 @@ class URL(object):
         If `xsentinels.Default` is left in place, then that value will be ignored and not replace
         anything that was parsed for that component from `url` string. Unless the 'url'
         pass in defined that particular component it will be set to None. When you append
-        a URL on another with values set to None, it will not 'append' them into the URL.
+        a Url on another with values set to None, it will not 'append' them into the Url.
 
         If you pass in a None, we will replace that particular value with a None inside the
-        URL.
+        Url.
 
         All parameters are optional. Providing no parameters at all creates a completely
-        blank URL. If you ask for the .url() of a blank URL, an empty string is returned.
+        blank Url. If you ask for the .url() of a blank Url, an empty string is returned.
 
-        Here is an example of all of these basic URL components in their proper place:
+        Here is an example of all of these basic Url components in their proper place:
         `scheme://username:password@host:port/path?query#fragment`
 
 
         Args:
-            url (str, URL): A normal URL formatted string or URL object;
+            url (str, Url): A normal Url formatted string or Url object;
                 ie: "www.google.com/hello".
 
-                If provided, forms the basis of the URL.
+                If provided, forms the basis of the Url.
                 All other parameters will over-write that particular
                 component of the url provided here
                 [ie: the other parameters take priority].
 
-            scheme: Replaces/Sets scheme on new URL object.
-            password: Replaces/Sets password on new URL object.
-            host: Replaces/Sets host on new URL object.
-            port: Replaces/Sets port on new URL object.
-            path: Replaces/Sets path on new URL object.
+            scheme: Replaces/Sets scheme on new Url object.
+            password: Replaces/Sets password on new Url object.
+            host: Replaces/Sets host on new Url object.
+            port: Replaces/Sets port on new Url object.
+            path: Replaces/Sets path on new Url object.
                 Path's can have variable placeholders in them, see
                 [Path Formatting Placeholders](#path-formatting-placeholders).
 
-            fragment: Replaces/Sets fragment on new URL object.
-            query:  Replaces/Sets query on new URL object.
+            fragment: Replaces/Sets fragment on new Url object.
+            query:  Replaces/Sets query on new Url object.
 
-
-
-            formatting_options: Way to configure how a query value can be split up into a
+            formatting_options:
+                Way to configure how a query value can be split up into a
                 list when parsing a url, and back again when reconstructing the url into a string.
-                For details, see the `URLFormattingOptions` class.
+                For details, see the `UrlFormattingOptions` class.
 
-                If set with None, `URL` class uses `DefaultQueryValueListFormat` by default
+                If set with None, `Url` class uses `DefaultQueryValueListFormat` by default
                 for it's formatting options.
 
-            singular: Provides a hint to indicate if the body of the request/response should be a
+            singular: (deprecated: need more generalized way to include metadata)
+                Provides a hint to indicate if the body of the request/response should be a
                 list or a single object. If 'None' [default], then the underlying system will do
                 it's best to guess based on other factors.
 
-            methods: If useful, you can provide a hint of which HTTP methods this URL is
-                valid for. Defaults to an empty set. When you append methods to another URL,
-                the result is a union of both sets of methods from the two URL's.
+            methods: (deprecated: need more generalized way to include metadata)
+                If useful, you can provide a hint of which HTTP methods this Url is
+                valid for. Defaults to an empty set. When you append methods to another Url,
+                the result is a union of both sets of methods from the two Url's.
         """
 
         if formatting_options is not Default:
             self._formatting_options = formatting_options
 
         if methods is not None:
+            warn(
+                "Url.methods deprecated pending a more generalized way to include metadata.",
+                DeprecationWarning, 2
+            )
             self._set_methods(methods)
         else:
             self._methods = set()
 
         if singular not in (None, Default):
+            warn(
+                "Url.singular deprecated pending a more generalized way to include metadata.",
+                DeprecationWarning, 2
+            )
             self._singular = singular
 
         if isinstance(url, str):
@@ -513,12 +569,12 @@ class URL(object):
             self._path = result.path or None
             self._fragment = result.fragment or None
             self._query = self._parse_string_into_query(result.query)
-        elif isinstance(url, URL):
+        elif isinstance(url, Url):
             self._copy_from_url(url)
         elif url in (None, Default):
             self._query = {}
         else:
-            raise TypeError(f"Type passed into URL(...) is not a str/URL/None, but ({type(url)}).")
+            raise TypeError(f"Type passed into Url(...) is not a str/Url/None, but ({type(url)}).")
 
         if scheme is not Default:
             self._scheme = scheme
@@ -545,7 +601,8 @@ class URL(object):
             self._set_query(query)
 
     # ----------------------------------------
-    # --------- Basic URL attributes ---------
+    # --------- Basic Url attributes ---------
+
     @property
     def scheme(self) -> Optional[str]:
         return self._scheme
@@ -588,6 +645,53 @@ class URL(object):
         """ Returns the value in query assigned to key, if key not found returns `None`. """
         return self._query.get(key, None)
 
+    @scheme.setter
+    def scheme(self, value: Optional[str]):
+        self._scheme = value
+        pass
+
+    @username.setter
+    def username(self, value: Optional[str]):
+        self._username = value
+        pass
+
+    @password.setter
+    def password(self, value: Optional[str]):
+        self._password = value
+        pass
+
+    @host.setter
+    def host(self, value: Optional[str]):
+        self._host = value
+        pass
+
+    @port.setter
+    def port(self, value: Optional[int]):
+        self._port = value
+        pass
+
+    @path.setter
+    def path(self, value: Optional[str]):
+        """Path's can have variable placeholders in them, for more details see
+        [Path Formatting Placeholders](#path-formatting-placeholders).
+        """
+        self._path = value
+        self._path_changed()
+        pass
+
+    @fragment.setter
+    def fragment(self, value: Optional[str]):
+        self._fragment = value
+        pass
+
+    @query.setter
+    def query(self, value: Query):
+        """Each value in query dictionary can be either a str/int, or a list of str/int.
+        If it is a list, see self.formatting_options for details on what happens.
+        """
+        # Filter out None values from dictionary.
+        self._set_query(value)
+
     # ---------------------------------
     # --------- Configuration ---------
 
@@ -601,17 +705,25 @@ class URL(object):
         """
         return self._singular
 
+    @singular.setter
+    def singular(self, value: Optional[bool]):
+        warn(
+            "Url.singular deprecated pending a more generalized way to include metadata.",
+            DeprecationWarning, 2
+        )
+        self._singular = value
+
     @property
-    def formatting_options(self) -> URLFormattingOptions:
+    def formatting_options(self) -> UrlFormattingOptions:
         """
-        This tells URL how to encode/decode multiple values [ie: list] for a particular
+        This tells Url how to encode/decode multiple values [ie: list] for a particular
         query name-key.
 
         If `formatting_options` is None, then by default `DefaultQueryValueListFormat`
         will be used.
 
-        Just like other URL attributes, if `formatting_options` is None, it will and you
-        append this URL to another URL, `formatting_options` will not change.
+        Just like other Url attributes, if `formatting_options` is None, it will and you
+        append this Url to another Url, `formatting_options` will not change.
 
         A query value can be either a str/int, or a list of str/int.
 
@@ -632,14 +744,26 @@ class URL(object):
         """
         return self._formatting_options
 
+    @formatting_options.setter
+    def formatting_options(self, value: UrlFormattingOptions):
+        self._formatting_options = value
+
     @property
     def methods(self) -> Optional[tuple]:
         # Return a read-only copy of the methods.
         return tuple(self._methods)
 
+    @methods.setter
+    def methods(self, value: Union[Iterable[str], str]):
+        warn(
+            "Url.methods deprecated pending a more generalized way to include metadata.",
+            DeprecationWarning, 2
+        )
+        self._set_methods(value)
+
     def methods_contain(self, method: str) -> bool:
         """Returns True if method is one of my methods, or if I have not assigned methods.
-        Otherwise returns False.
+        Otherwise, returns False.
 
         It's faster to use this method then to get all methods and look yourself since I
         use a set internally and can more quickly lookup things in the set.
@@ -654,7 +778,7 @@ class URL(object):
 
     @property
     def secondary_values(self) -> SecondaryValues:
-        """Returns any SecondaryValues that have been attached to URL.
+        """Returns any SecondaryValues that have been attached to Url.
         See `self.is_valid(...)` and/or `self.url(...)` for more details.
         """
         return self._secondary_values
@@ -662,20 +786,21 @@ class URL(object):
     # ------------------------------
     # --------- Copy/Utils ---------
 
-    def copy(self) -> URL:
+    def copy(self) -> Url:
         """ We are immutable, so return self without needing to copy. """
-        return self
+        return Url(self)
 
-    def copy_mutable(self) -> URLMutable:
-        """ Returns a copy of self as a URLMutable. """
-        return URLMutable(self)
+    def copy_mutable(self) -> Url:
+        """ Returns a copy of self as a Url. """
+        return Url(self)
+
+    def __copy__(self):
+        # Creates a new object of type self, with self as first param.
+        # This should make a copy of self.
+        return Url(self)
 
     # ---------------------------------
     # ------------ Methods ------------
-
-    def append_url(self, url: Optional[URLStr]) -> URLMutable:
-        """ Creates a self.copy_mutable(), appends url to that and returns the result. """
-        return self.copy_mutable().append_url(url)
 
     # todo: Not sure if this really should be here or not...
     def query_id_if_singular(self):
@@ -692,14 +817,16 @@ class URL(object):
 
         return None
 
-    def is_valid(self, secondary_values: SecondaryValues = Default) -> bool:
+    def is_valid(
+            self, secondary_values: SecondaryValues = Default, attach_values: bool = False
+    ) -> bool:
         """
         A more efficient way to determine if we can produce a valid url string.
         The efficiency comes from not needing to actually format and produce the url string.
 
         Return True if self.url() would return a valid url, else False.
 
-        The URLMutable version of this method allows you to 'attach' the secondary values
+        The Url version of this method allows you to 'attach' the secondary values
         to the url. If so, will use the attached values when calling self.url(...) and passing
         no secondary values into that method.
 
@@ -710,13 +837,29 @@ class URL(object):
                 If the object(s) or dict has the needed value, then we will use that to satisfy
                 the url placeholder.
 
+            attach_values: If `True`, will 'attach' the secondary values **IF** url is valid with
+                them.
+                Attaching means that they are the default secondary values used when generating
+                the Url or when calling is_valid(...) in the future.
+
+                If attach_values is a Class/Object, it will directly set this value into the new
+                copy.
+                We will do a shallow-copy IF the value is a dict/list.
+
         Returns:
-            True: `URL` is valid and you can call `URL.url` without a problem
+            True: `Url` is valid and you can call `Url.url` without a problem
                 (with same secondary_values if you did not attach them).
-            False: `URL` is invalid, it needs more formatting params or there is some other issue.
+            False: `Url` is invalid, it needs more formatting params or there is some other issue.
         """
 
         format_map = self._formatted_map(secondary_values=secondary_values)
+        if format_map and attach_values:
+            # Do a shallow copy if it's a list/dict, like we document we do.
+            # We don't make a copy for anything else (like a normal object).
+            if isinstance(secondary_values, (list, dict)):
+                secondary_values = copy(secondary_values)
+            # Attach these as the default secondary_values when formatting self.url()
+            self._secondary_values = secondary_values
         return format_map is not None
 
     def url(
@@ -755,19 +898,19 @@ class URL(object):
                 If `False` (default): Always return a fully formatted url, and if we can't do
                 that then return `None` instead.
 
-                .. important:: If you indirectly convert a `URL` object into a string via
+                .. important:: If you indirectly convert a `Url` object into a string via
                     `f"some url {url_obj}"`, that will pass True to `allow_invalid_url`
                     in order to always produce a non-None string, as Python requires this.
                     This is mostly used when logging url objects.
                     Code that always requires a valid url should use this method to explicitly
-                    format the `URL` object into a fully-formatted url string!
+                    format the `Url` object into a fully-formatted url string!
         Returns:
             Normal string as a fully constructed url.
 
-            If `None` is returned, the URL could not be formatted (see `URL.is_valid`).
+            If `None` is returned, the Url could not be formatted (see `Url.is_valid`).
             There is a missing or invalid value for one of the required formatting key-names.
 
-            See URL class doc section
+            See Url class doc section
             [Path Formatting Placeholders](#path-formatting-placeholders).
             for more details.
         """
@@ -820,12 +963,12 @@ class URL(object):
         """
         Will return self.url(), which should return a formatted url string.
 
-        If that returns None, it means we have some part of the URL that can't be formatted,
-        so we then return an unformatted/raw version of the URL.
+        If that returns None, it means we have some part of the Url that can't be formatted,
+        so we then return an unformatted/raw version of the Url.
 
         This means placeholders like `hello/{some_value}/`, if we don't have a value
-        for `{some_value}` then we would have to return the URL with the placeholder as-is
-        instead of formatting the URL and replacing `{some_value}` with the real value.
+        for `{some_value}` then we would have to return the Url with the placeholder as-is
+        instead of formatting the Url and replacing `{some_value}` with the real value.
         """
         # If we can't generate a valid url, then return the best invalid version we have.
         return self.url(allow_invalid_url=True)
@@ -833,10 +976,159 @@ class URL(object):
     def __repr__(self):
         return f"{type(self).__name__}('{self}')"
 
+    # ---------------------------------------------
+    # --------- Advanced Mutation Methods ---------
+
+    def set_methods(self, methods: Union[Iterable[str], str], *args):
+        """Sets methods and returns self, so you can chain it with other mods.
+        You can pass in an iterable or a direct string, for any number of arguments.
+        We will iterate each argument if it's not a string to combine all of them
+        together in one list, which will be set on self.methods.
+
+        `self` is returned, so you can chain this with other method calls.
+        """
+        self._set_methods(xloop(methods, args))
+        return self
+
+    def set_singular(self, value: Optional[bool]) -> Url:
+        """Sets singular to value.
+        `self` is returned, so you can chain this with other method calls.
+        """
+        self.singular = value
+        return self
+
+    def set_formatting_options(self, value: Optional[UrlFormattingOptions]) -> Url:
+        """Does  `self.formatting_options = value` for you while returning `self`.
+        `self` is returned, so you can easily chain this with other method calls if you wish.
+        """
+        self.formatting_options = value
+        return self
+
+    def append_url(self, url: Optional[UrlStr]) -> Url:
+        """Takes the components of url, and any that look true [ie: are not False or None]
+        are set on myself.
+
+        In the case of the path, `append_path` is called instead, so the path provided in
+        `url` is appended to any already existing path.
+
+        For the query, the `append_query()` is used, and only keys with the same key-name
+        will be replaced. Otherwise, the query key/value is added to any already existing
+        query key/value pairs.
+
+        For methods, `append_methods` is called, and will add any methods not already present.
+
+        `self` is returned, so you can chain this with other method calls.
+        """
+        if url is None:
+            return self
+
+        # Make sure we have a Url, we want to look at it's various components...
+        url = Url.ensure_url(url, default_formatting_options=self.formatting_options)
+
+        self.append_path(url.path)
+        self.append_query(url._query)
+        self.append_methods(url._methods)
+
+        for attr_name in _attributes_to_set_when_appending:
+            other_value = getattr(url, attr_name, None)
+            if other_value is not None:
+                setattr(self, attr_name, other_value)
+
+        return self
+
+    def append_path(self, path_component: Optional[str]) -> Url:
+        """Appends path with path_component, making sure to add a slash if needed to separate
+        new component from any current path.
+
+        `self` is returned, so you can chain this with other method calls.
+        """
+        if not path_component:
+            return self
+
+        path_component = str(path_component)
+        if not path_component:
+            return self
+
+        # Remove any starting slash if needed, we will be providing our own slash later.
+        if path_component[0] == '/':
+            path_component = path_component[1:]
+
+        current_path = self._path
+
+        if not current_path:
+            current_path = ''
+
+        # If the current path ends in a slash, remove it.
+        if len(current_path) > 0 and current_path[-1] == '/':
+            current_path = current_path[:-1]
+
+        # Append the new path component with a slash to separate it.
+        self._path = f'{current_path}/{path_component}'
+        self._path_changed()
+        return self
+
+    def append_query(self, query: Optional[Query]) -> Url:
+        """Calls `Url.query_add` for each key/value pair in query. Only keys with the
+        same key-name will be replaced. Otherwise, the query key/value is added to any already
+        existing query key/value pairs.
+
+        `self` is returned, so you can chain this with other method calls.
+        """
+        if not query:
+            return self
+
+        for key, value in query.items():
+            self.query_add(key, value)
+        return self
+
+    def append_methods(self, methods: Iterable[str]) -> Url:
+        if methods:
+            self._methods.update(methods)
+        return self
+
+    def methods_add(self, method: str) -> Url:
+        if method:
+            self._methods.add(method)
+        return self
+
+    def methods_remove(self, method: str) -> Url:
+        if method:
+            self._methods.discard(method)
+        return self
+
+    def query_add(self, key: str = None, value: QueryValue = None) -> Url:
+        """Use to set a key in query easily. This will entirely replace query with name `key`
+        if the value is not None. If value is None, nothing will happen/change.
+        If you want to remove a query item, use 'self.query_remove(...)' instead.
+
+        A query value can be either a str/int, or a list of str/int.
+        If it is a list, then see self.formatting_options for details on what happens.
+
+        A shallow copy will be made of value, ie: `copy(value)` before it's added to url.
+
+        `self` is returned, so you can chain this with other method calls.
+        """
+
+        if value is None:
+            return self
+
+        if self._query is None:
+            self._query = {}
+
+        self._query[key] = copy(value)
+        return self
+
+    def query_remove(self, key) -> Url:
+        """Remove value for key in query, if key does not exist nothing happens.
+        `self` is returned, so you can chain this with other method calls.
+        """
+        self._query.pop(key, None)
+        return self
+
     # ---------------------------
     # --------- Private ---------
 
-    def _copy_from_url(self, url: URL):
+    def _copy_from_url(self, url: Url):
         """Correctly copies in an optimized way, everything in url into self."""
         self.__dict__.update(url.__dict__)
         self._query = copy(url._query)
@@ -868,7 +1160,7 @@ class URL(object):
 
     def _format_keys(self) -> List[str]:
         """Returns a list of format keys that are in the path. It caches this information
-        lazily. Be sure to call `URL._path_changed()` when the path changes, which throws away
+        lazily. Be sure to call `Url._path_changed()` when the path changes, which throws away
         this cached info.
         """
         keys = self._cached_format_keys
@@ -885,9 +1177,9 @@ class URL(object):
         return keys
 
     def _parse_string_into_query(self, query_string: str) -> Query:
-        """Go though each query value and parse it according to the self.formatting_options.
+        """Go through each query value and parse it according to the self.formatting_options.
         Keeps single-values as non-list items.  If there is more than one value for a
-        particular query key-name, it well put all the values into a list.
+        particular query key-name, it will put all the values into a list.
         """
         query = {}
 
@@ -903,12 +1195,22 @@ class URL(object):
 
             all_values = []
             force_list = False
-            if check_formatting and k.endswith(suffix):
+            is_list_keep_suffix = False
+
+            if check_formatting:
+                for keep_suffix in (formatting.list_key_suffixes_to_keep or []):
+                    if k.endswith(keep_suffix):
+                        is_list_keep_suffix = True
+                        break
+
+            if check_formatting and (is_list_keep_suffix or k.endswith(suffix)):
                 # If we do have something like `__in=a`, we want to keep it as a list
                 # even if it only has a single item.  That way when we construct the url
                 # again in the future, the `__in=a` will be preserved.
                 force_list = True
-                k = k[:-suffix_len]
+                if not is_list_keep_suffix:
+                    k = k[:-suffix_len]
+
                 for item in v:
                     all_values.extend(item.split(delimiter))
             else:
@@ -937,6 +1239,7 @@ class URL(object):
             if not values:
                 continue
 
+            # TODO: Probably remove this, seem strange.
             formatter = values[0]
             if not isinstance(formatter, _FormattedQueryValue):
                 formatter = _default_query_formatter
@@ -947,7 +1250,7 @@ class URL(object):
             query_filtered.update(formatted_query)
 
         # It's legal to have query-values contain commas and so we declare them safe.
-        # This prevents them from being encoded (easier to read URL, makes them smaller).
+        # This prevents them from being encoded (easier to read Url, makes them smaller).
         return urlparser.urlencode(query_filtered, doseq=True, safe=',')
 
     def _formatted_map(
@@ -963,9 +1266,9 @@ class URL(object):
                 allows for it in the future, when we get around to support it.
 
                 If left as `xsentinels.Default` then we will use self.secondary_values,
-                if any are there. You can 'attach' secondary values to a URL via:
+                if any are there. You can 'attach' secondary values to a Url via:
 
-                >>> URLMutable.is_valid(secondary_values={'id': 2}, attach_values=True)
+                >>> Url.is_valid(secondary_values={'id': 2}, attach_values=True)
 
                 If `None`, then no secondary values will be used.
 
@@ -1056,7 +1359,7 @@ class URL(object):
 
         Returns:
             String if we have a valid path, otherwise False if we can't generate Path due to
-            lack of values in `URL.query` or `secondary_values`.
+            lack of values in `Url.query` or `secondary_values`.
         """
 
         mapped_values = self._formatted_map(
@@ -1067,7 +1370,7 @@ class URL(object):
             # We were unable to find values for one ore more format placeholders for our url path.
             return None
 
-        # URL encode/quote all the values into a new dict.
+        # Url encode/quote all the values into a new dict.
         mapped_values = {k: urlparser.quote(v, safe='') for (k, v) in mapped_values.items()}
         path = self._path or ''
         if mapped_values:
@@ -1075,13 +1378,13 @@ class URL(object):
 
         return path
 
-    _formatting_options: Optional[URLFormattingOptions] = None
+    _formatting_options: Optional[UrlFormattingOptions] = None
     """
         If the value is `None`, it means we use DefaultQueryValueListFormat when constructing the
         url.
 
-        BUT it also means we DON'T append this value into another URL via `URL.append_url(...)`,
-        we don't want to let this value ever override another value when appending URL's.
+        BUT it also means we DON'T append this value into another Url via `Url.append_url(...)`,
+        we don't want to let this value ever override another value when appending Url's.
     """
 
     _singular: Optional[bool] = None
@@ -1103,332 +1406,16 @@ class URL(object):
     _secondary_values: SecondaryValues = None
 
 
-URLStr = Union[str, URL, None]
-""" A type that can be either a string or URL.
+UrlStr = Url | str | None
+""" A type that can be either a string or Url.
 """
-
-
-# noinspection PyMethodOverriding
-class URLMutable(URL):
-    """
-    Class represents a URL split into the basic URL components. See `URL` class for more basic
-    details.  This version of URL allows you to easily mutate/change a URL by calling methods
-    and setting attributes. After your done you can call `URL.url()` to get back a basic url
-    string.
-
-    A big way to use URLMutable is to `URLMutable.append_url` `URL`'s together.  You can then take
-    different `URL`'s that have different components and construct a final `URL` to use.
-
-    When appending a URL to another [via `URLMutable.append_url`], if any particular component
-    has a None value, it will not change the URL it's being appended to for that particular
-    component. This allows you to append URLs together and only relevant/set-values will
-    be whats appended. This allows you to construct URLs based on pieces of URLs to construct
-    the final URL.
-
-    When you append a URL, the path and query and methods are treated in a special way:
-
-    - `URLMutable.path`: it will be appended to the destination URL via
-        `URLMutable.append_path`, and therefore, the path will be appended onto the existing
-        path (with a `/` if needed to separate them).
-
-    - `URLMutable.query`: Keys will be added via `URLMutable.query_add`, and therefore the only
-        keys that will be replaced are ones where the same key-name exists in both URLs.
-        Otherwise, the keys are 'added' together.
-
-    - `URLMutable.methods`: This will get union'd with the existing `methods` in the destination
-        url.
-
-    The methods that mutate self [such as 'append_path', etc] return self, so you can chain
-    them together with other mutating methods.
-
-    Example Usages:
-    >>> urlc = URLMutable()
-    >>> urlc.scheme = 'http'
-    >>> urlc.host = 'www.google.com'
-    >>> urlc.url()
-    "http://www.google.com"
-    >>> urlc = URLMutable("http://www.google.com").append_url("/hello")
-    >>> urlc.url()
-    "http://www.google.com/hello"
-    """
-
-    # ----------------------------------------
-    # --------- Basic URL attributes ---------
-
-    @URL.scheme.setter
-    def scheme(self, value: Optional[str]):
-        self._scheme = value
-        pass
-
-    @URL.username.setter
-    def username(self, value: Optional[str]):
-        self._username = value
-        pass
-
-    @URL.password.setter
-    def password(self, value: Optional[str]):
-        self._password = value
-        pass
-
-    @URL.host.setter
-    def host(self, value: Optional[str]):
-        self._host = value
-        pass
-
-    @URL.port.setter
-    def port(self, value: Optional[int]):
-        self._port = value
-        pass
-
-    @URL.path.setter
-    def path(self, value: Optional[str]):
-        """Path's can have variable placeholders in them, for more details see
-        [Path Formatting Placeholders](#path-formatting-placeholders).
-        """
-        self._path = value
-        self._path_changed()
-        pass
-
-    @URL.fragment.setter
-    def fragment(self, value: Optional[str]):
-        self._fragment = value
-        pass
-
-    @URL.query.setter
-    def query(self, value: Query):
-        """Each value in query dictionary can be either a str/int, or a list of str/int.
-        If it is a list, see self.formatting_options for details on what happens.
-        """
-        # Filter out None values from dictionary.
-        self._set_query(value)
-
-    @URL.methods.setter
-    def methods(self, value: Union[Iterable[str], str]):
-        self._set_methods(value)
-
-    # ------------------------------
-    # --------- Copy/Utils ---------
-
-    def copy(self) -> URL:
-        """ Returns a brand new copy of self in a new URL object. """
-        return URL(self)
-
-    def copy_mutable(self) -> URLMutable:
-        """ Returns a copy of self as a URLMutable """
-        return copy(self)
-
-    def __copy__(self):
-        # Creates a new object of type self, with self as first param.
-        # This should make a copy of self.
-        return type(self)(self)
-
-    # ---------------------------------
-    # --------- Configuration ---------
-
-    # This is a hint to the underlying system that the query will return a singular object
-    # instead of potentially manny.  If this is None, then underlying system may try to
-    # inspect results to try and determine if it's many or one.
-    # todo: Implement 'None' value in api.RestClient, right now it treats None as False.
-
-    @URL.singular.setter
-    def singular(self, value: Optional[bool]):
-        self._singular = value
-
-    @URL.formatting_options.setter
-    def formatting_options(self, value: URLFormattingOptions):
-        self._formatting_options = value
-
-    def is_valid(
-        self,
-        secondary_values: SecondaryValues = Default,
-        attach_values: bool = False,
-    ) -> bool:
-        """
-        Args:
-            secondary_values: If query does not have a needed value to satisfy a formatting
-                placeholder, we will look at values in here.
-                It can be a object, dict or a sequence of objects.
-                If the object(s) or dict has the needed value, then we will use that to satisfy
-                the url placeholder.
-
-            attach_values: If `True`, will 'attach' the secondary values **IF** url is valid with
-                them.
-                Attaching means that they are the default secondary values used when generating
-                the URL or when calling is_valid(...) in the future.
-
-                If attach_values is a Class/Object, it will directly set this value into the new
-                copy.
-                We will do a shallow-copy IF the value is a dict/list.
-        Returns:
-            True: `URL` is valid and you can call `URL.url` without a problem
-                (with same secondary_values if you did not attach them).
-            False: `URL` is invalid, it needs more formatting params or there is some other issue.
-        """
-        result = super().is_valid(secondary_values=secondary_values)
-        if result and attach_values:
-            # Do a shallow copy if it's a list/dict, like we document we do.
-            # We don't make a copy for anything else (like a normal object).
-            if isinstance(secondary_values, (list, dict)):
-                secondary_values = copy(secondary_values)
-            # Attach these as the default secondary_values when formatting self.url()
-            self._secondary_values = secondary_values
-        return result
-
-    # ---------------------------------------------
-    # --------- Advanced Mutation Methods ---------
-
-    def set_methods(self, methods: Union[Iterable[str], str], *args):
-        """Sets methods and returns self, so you can chain it with other mods.
-        You can pass in an iterable or a direct string, for any number of arguments.
-        We will iterate each argument if it's not a string to combine all of them
-        together in one list, which will be set on self.methods.
-
-        `self` is returned, so you can chain this with other method calls.
-        """
-        self._set_methods(xloop(methods, args))
-        return self
-
-    def set_singular(self, value: Optional[bool]) -> URLMutable:
-        """Sets singular to value.
-        `self` is returned, so you can chain this with other method calls.
-        """
-        self.singular = value
-        return self
-
-    def set_formatting_options(self, value: Optional[URLFormattingOptions]) -> URLMutable:
-        """Does  `self.formatting_options = value` for you while returning `self`.
-        `self` is returned, so you can easily chain this with other method calls if you wish.
-        """
-        self.formatting_options = value
-        return self
-
-    def append_url(self, url: Optional[URLStr]) -> URLMutable:
-        """Takes the components of url, and any that look true [ie: are not False or None]
-        are set on myself.
-
-        In the case of the path, `append_path` is called instead, so the path provided in
-        `url` is appended to any already existing path.
-
-        For the query, the `append_query()` is used, and only keys with the same key-name
-        will be replaced. Otherwise, the query key/value is added to any already existing
-        query key/value pairs.
-
-        For methods, `append_methods` is called, and will add any methods not already present.
-
-        `self` is returned, so you can chain this with other method calls.
-        """
-        if url is None:
-            return self
-
-        # Make sure we have a URL, we want to look at it's various components...
-        url = URL.ensure_url(url, default_formatting_options=self.formatting_options)
-
-        self.append_path(url.path)
-        self.append_query(url._query)
-        self.append_methods(url._methods)
-
-        for attr_name in attributes_to_set_when_appending:
-            other_value = getattr(url, attr_name, None)
-            if other_value is not None:
-                setattr(self, attr_name, other_value)
-
-        return self
-
-    def append_path(self, path_component: Optional[str]) -> URLMutable:
-        """Appends path with path_component, making sure to add a slash if needed to separate
-        new component from any current path.
-
-        `self` is returned, so you can chain this with other method calls.
-        """
-        if not path_component:
-            return self
-
-        path_component = str(path_component)
-        if not path_component:
-            return self
-
-        # Remove any starting slash if needed, we will be providing our own slash later.
-        if path_component[0] == '/':
-            path_component = path_component[1:]
-
-        current_path = self._path
-
-        if not current_path:
-            current_path = ''
-
-        # If the current path ends in a slash, remove it.
-        if len(current_path) > 0 and current_path[-1] == '/':
-            current_path = current_path[:-1]
-
-        # Append the new path component with a slash to separate it.
-        self._path = f'{current_path}/{path_component}'
-        self._path_changed()
-        return self
-
-    def append_query(self, query: Optional[Query]) -> URLMutable:
-        """Calls `URLMutable.query_add` for each key/value pair in query. Only keys with the
-        same key-name will be replaced. Otherwise, the query key/value is added to any already
-        existing query key/value pairs.
-
-        `self` is returned, so you can chain this with other method calls.
-        """
-        if not query:
-            return self
-
-        for key, value in query.items():
-            self.query_add(key, value)
-        return self
-
-    def append_methods(self, methods: Iterable[str]) -> URLMutable:
-        if methods:
-            self._methods.update(methods)
-        return self
-
-    def methods_add(self, method: str) -> URLMutable:
-        if method:
-            self._methods.add(method)
-        return self
-
-    def methods_remove(self, method: str) -> URLMutable:
-        if method:
-            self._methods.discard(method)
-        return self
-
-    def query_add(self, key: str = None, value: QueryValue = None) -> URLMutable:
-        """Use to set a key in query easily. This will entirely replace query with name `key`
-        if the value is not None. If value is None, nothing will happen/change.
-        If you want to remove a query item, use 'self.query_remove(...)' instead.
-
-        A query value can be either a str/int, or a list of str/int.
-        If it is a list, then see self.formatting_options for details on what happens.
-
-        A shallow copy will be made of value, ie: `copy(value)` before it's added to url.
-
-        `self` is returned, so you can chain this with other method calls.
-        """
-
-        if value is None:
-            return self
-
-        if self._query is None:
-            self._query = {}
-
-        self._query[key] = copy(value)
-        return self
-
-    def query_remove(self, key) -> URLMutable:
-        """Remove value for key in query, if key does not exist nothing happens.
-        `self` is returned, so you can chain this with other method calls.
-        """
-        self._query.pop(key, None)
-        return self
 
 
 # Basically, we have to set every attribute except query/path/methods.
 # For path we can append to the end of it.
 # For query, we can merge them together since they are Dict's.
 # For methods, we can merge them since they are lists.
-attributes_to_set_when_appending = [
+_attributes_to_set_when_appending = {
     'scheme',
     'username',
     'password',
@@ -1437,4 +1424,4 @@ attributes_to_set_when_appending = [
     'fragment',
     'singular',
     'formatting_options',
-]
+}

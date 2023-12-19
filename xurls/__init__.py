@@ -1,2 +1,2 @@
-from .url import URL, URLStr, URLMutable, URLFormattingOptions
+from .url import Url, UrlStr, UrlFormattingOptions
 from .url import HTTPGet, HTTPPut, HTTPPost, HTTPPatch, HTTPDelete
