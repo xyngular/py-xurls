@@ -3,9 +3,10 @@
 
 ## Documentation
 
-This is pre-release Alpha software, based on another code base and
-the needed changes to make a final release version are not yet
-completed.
+A high-level `Url` class to make parsing, looking at and manipulating
+urls much easier.
+
+Also allows for easily composable urls.
 
 Everything is subject to change!
 
@@ -32,6 +33,6 @@ url = Url("http://www.google.com/some/path")
 assert url.host == "www.google.com"
 
 url.host = "apple.com"
-assert url.url() == "http://appe.com/some/path"
+assert str(url) == "http://apple.com/some/path"
 ```
 
