@@ -75,6 +75,8 @@ from urllib import parse as urlparser
 from types import MappingProxyType
 from dataclasses import dataclass
 import string
+from warnings import warn
+
 from xloop import xloop
 
 # I'm not going to worry about url 'parameters' for now,
@@ -283,12 +285,12 @@ class UrlFormattingOptions:
         '__fields__only',
         '__fields__exclude'
     ]
-    """ Suffixes listed here can impliclity take a delimited list of values
+    """ Suffixes listed here can implicitly take a delimited list of values
         without using the generalized `UrlFormattingOptions.list_key_suffix` (see above).
-        
+
         The `UrlFormattingOptions.list_key_suffix` won't be used if a key ends with one of
-        these keys, but instead the list will be directly formatted/parsed directly out of the value
-        without modifying the key.
+        these keys, but instead the list will be directly formatted/parsed directly out of
+        the value without modifying the key.
     """
 
     list_value_delimiter: str = ','
@@ -459,11 +461,14 @@ class Url:
         path: str = Default,
         query: Query = Default,
         fragment: str = Default,
-        # Params below are extra metadata about Url that is useful to communicate about:
         formatting_options: UrlFormattingOptions = Default,
+
+        # Params below are extra metadata about Url that is useful to communicate about:
+        # TODO: Find a more generalized way to include 'mergeable'/'appendable' metadata
+        #   in the Url object; For now keeping them, but need to remove in the
+        #   next major release.
         singular: bool = None,
         methods: Union[str, Iterable[str]] = None,
-        # TODO:  Add some sort of "meta: dict" option here.
     ):
         """
         # `__init__` Specifics
@@ -510,20 +515,21 @@ class Url:
             fragment: Replaces/Sets fragment on new Url object.
             query:  Replaces/Sets query on new Url object.
 
-
-
-            formatting_options: Way to configure how a query value can be split up into a
+            formatting_options:
+                Way to configure how a query value can be split up into a
                 list when parsing a url, and back again when reconstructing the url into a string.
                 For details, see the `UrlFormattingOptions` class.
 
                 If set with None, `Url` class uses `DefaultQueryValueListFormat` by default
                 for it's formatting options.
 
-            singular: Provides a hint to indicate if the body of the request/response should be a
+            singular: (deprecated: need more generalized way to include metadata)
+                Provides a hint to indicate if the body of the request/response should be a
                 list or a single object. If 'None' [default], then the underlying system will do
                 it's best to guess based on other factors.
 
-            methods: If useful, you can provide a hint of which HTTP methods this Url is
+            methods: (deprecated: need more generalized way to include metadata)
+                If useful, you can provide a hint of which HTTP methods this Url is
                 valid for. Defaults to an empty set. When you append methods to another Url,
                 the result is a union of both sets of methods from the two Url's.
         """
@@ -532,11 +538,19 @@ class Url:
             self._formatting_options = formatting_options
 
         if methods is not None:
+            warn(
+                "Url.methods deprecated pending a more generalized way to include metadata.",
+                DeprecationWarning, 2
+            )
             self._set_methods(methods)
         else:
             self._methods = set()
 
         if singular not in (None, Default):
+            warn(
+                "Url.singular deprecated pending a more generalized way to include metadata.",
+                DeprecationWarning, 2
+            )
             self._singular = singular
 
         if isinstance(url, str):
@@ -588,7 +602,6 @@ class Url:
 
     # ----------------------------------------
     # --------- Basic Url attributes ---------
-
 
     @property
     def scheme(self) -> Optional[str]:
@@ -679,7 +692,6 @@ class Url:
         # Filter out None values from dictionary.
         self._set_query(value)
 
-
     # ---------------------------------
     # --------- Configuration ---------
 
@@ -695,6 +707,10 @@ class Url:
 
     @singular.setter
     def singular(self, value: Optional[bool]):
+        warn(
+            "Url.singular deprecated pending a more generalized way to include metadata.",
+            DeprecationWarning, 2
+        )
         self._singular = value
 
     @property
@@ -732,21 +748,22 @@ class Url:
     def formatting_options(self, value: UrlFormattingOptions):
         self._formatting_options = value
 
-
     @property
     def methods(self) -> Optional[tuple]:
         # Return a read-only copy of the methods.
         return tuple(self._methods)
 
-
     @methods.setter
     def methods(self, value: Union[Iterable[str], str]):
+        warn(
+            "Url.methods deprecated pending a more generalized way to include metadata.",
+            DeprecationWarning, 2
+        )
         self._set_methods(value)
-
 
     def methods_contain(self, method: str) -> bool:
         """Returns True if method is one of my methods, or if I have not assigned methods.
-        Otherwise returns False.
+        Otherwise, returns False.
 
         It's faster to use this method then to get all methods and look yourself since I
         use a set internally and can more quickly lookup things in the set.
@@ -800,7 +817,9 @@ class Url:
 
         return None
 
-    def is_valid(self, secondary_values: SecondaryValues = Default, attach_values: bool = False) -> bool:
+    def is_valid(
+            self, secondary_values: SecondaryValues = Default, attach_values: bool = False
+    ) -> bool:
         """
         A more efficient way to determine if we can produce a valid url string.
         The efficiency comes from not needing to actually format and produce the url string.
@@ -956,7 +975,6 @@ class Url:
 
     def __repr__(self):
         return f"{type(self).__name__}('{self}')"
-
 
     # ---------------------------------------------
     # --------- Advanced Mutation Methods ---------
