@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/xyngular/py-xurls/compare/v1.0.0...v1.1.0) (2024-03-21)
+
+
+### Features
+
+* UUID already work as QueryValue; now formally declaring they work. ([d4ddfce](https://github.com/xyngular/py-xurls/commit/d4ddfce8d885081a4515e392f024490d5ea63b74))
+
+
+### Bug Fixes
+
+* update deps/lock-file. ([0d5655c](https://github.com/xyngular/py-xurls/commit/0d5655c10dcfd36abe6e398cb3ec393acd04384b))
+
 ## [1.0.0](https://github.com/xyngular/py-xurls/compare/v0.2.1...v1.0.0) (2023-12-19)
 
 
