@@ -75,6 +75,7 @@ from urllib import parse as urlparser
 from types import MappingProxyType
 from dataclasses import dataclass
 import string
+from uuid import UUID
 from warnings import warn
 
 from xloop import xloop
@@ -244,7 +245,8 @@ QueryValue = Union[
     dt.date,
     _FormattedQueryValue,
     None,
-    Iterable[Union[str, int, dt.date, _FormattedQueryValue]],
+    UUID,
+    Iterable[str | int | UUID | dt.date | _FormattedQueryValue],
 ]
 """ A query value can be either a str, or a list of str.
 
