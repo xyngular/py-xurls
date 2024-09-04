@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/xyngular/py-xurls/compare/v1.2.0...v1.2.1) (2024-09-04)
+
+
+### Bug Fixes
+
+* implementing `__len__` made the bool-value not what one would expect. ([08864d9](https://github.com/xyngular/py-xurls/commit/08864d9fa7d724f67c9200dc6e863e1b2eb4f320))
+
 ## [1.2.0](https://github.com/xyngular/py-xurls/compare/v1.1.0...v1.2.0) (2024-09-04)
 
 
