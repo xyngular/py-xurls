@@ -152,3 +152,8 @@ def test_url_dict_access_query_values():
     assert url.query == {'a': '1'}
 
 
+def test_url_bool_value():
+    assert not Url()
+    assert Url('a')
+    assert Url(query={'day': 'today'})
+    assert Url(host='example.com')
