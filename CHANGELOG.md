@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/xyngular/py-xurls/compare/v1.1.0...v1.2.0) (2024-09-04)
+
+
+### Features
+
+* use url like a dict to get/set/delete query values. ([f47c00d](https://github.com/xyngular/py-xurls/commit/f47c00dc55f39feefe07c3275b88f6e7b372a200))
+
+
+### Documentation
+
+* added example to readme. ([40cedb0](https://github.com/xyngular/py-xurls/commit/40cedb0df36092ddf63854bbc25e09f4b3b98b10))
+
 ## [1.1.0](https://github.com/xyngular/py-xurls/compare/v1.0.0...v1.1.0) (2024-03-21)
 
 
