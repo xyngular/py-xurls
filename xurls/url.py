@@ -643,10 +643,6 @@ class Url:
         # This will LIVE update the mapping if _query is directly changed!
         return MappingProxyType(self._query)
 
-    def query_value(self, key: str) -> Optional[QueryValue]:
-        """ Returns the value in query assigned to key, if key not found returns `None`. """
-        return self._query.get(key, None)
-
     @scheme.setter
     def scheme(self, value: Optional[str]):
         self._scheme = value
@@ -1136,6 +1132,9 @@ class Url:
             self._methods.discard(method)
         return self
 
+    # ---------------------------------
+    # --------- Query Methods ---------
+
     def query_add(self, key: str = None, value: QueryValue = None) -> Url:
         """Use to set a key in query easily. This will entirely replace query with name `key`
         if the value is not None. If value is None, nothing will happen/change.
@@ -1164,6 +1163,28 @@ class Url:
         """
         self._query.pop(key, None)
         return self
+
+    def query_value(self, key: str) -> Optional[QueryValue]:
+        """ Returns the value in query assigned to key, if key not found returns `None`. """
+        return self._query.get(key, None)
+
+    # -----------------------------------------------------------------
+    # --------- Dict Access into Query Values Special Methods ---------
+
+    def __setitem__(self, key, item):
+        self.query_add(key, item)
+
+    def __getitem__(self, key):
+        return self.query_value(key)
+
+    def __len__(self):
+        v = self._query
+        if not v:
+            return 0
+        return len(v)
+
+    def __delitem__(self, key):
+        self.query_remove(key)
 
     # ---------------------------
     # --------- Private ---------

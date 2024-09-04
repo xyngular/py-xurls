@@ -133,3 +133,22 @@ def test_url_implicit_str_conversion_with_invalid_url():
     url.query_add('id', 4)
     implicit_str = f'some url 2 ({url})'
     assert implicit_str == 'some url 2 (https://www.test.com/v1/objects/4)'
+
+
+def test_url_dict_access_query_values():
+    url = Url(query={'a': 'b'})
+    assert url['a'] == 'b'
+
+    url['a'] = '1'
+    assert url['a'] == '1'
+
+    url['b'] = 'c'
+    assert url['a'] == '1'
+    assert url['b'] == 'c'
+    assert url.query == {'a': '1', 'b': 'c'}
+
+    del url['b']
+    assert url['a'] == '1'
+    assert url.query == {'a': '1'}
+
+
