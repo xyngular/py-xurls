@@ -1186,6 +1186,10 @@ class Url:
     def __delitem__(self, key):
         self.query_remove(key)
 
+    def __bool__(self):
+        # Check to see if `url` is empty in terms of any url string it would generate.
+        return bool(str(self))
+
     # ---------------------------
     # --------- Private ---------
 
