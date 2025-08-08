@@ -157,3 +157,8 @@ def test_url_bool_value():
     assert Url('a')
     assert Url(query={'day': 'today'})
     assert Url(host='example.com')
+
+
+def test_url_key_suffixes_to_keep():
+    url = Url(query={'hello__in!': ['1', '2']})
+    assert url.format() == "?hello__in%21=1,2"

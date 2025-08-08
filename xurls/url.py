@@ -285,7 +285,8 @@ class UrlFormattingOptions:
     list_key_suffixes_to_keep = [
         '__fields__include',
         '__fields__only',
-        '__fields__exclude'
+        '__fields__exclude',
+        '__in!'
     ]
     """ Suffixes listed here can implicitly take a delimited list of values
         without using the generalized `UrlFormattingOptions.list_key_suffix` (see above).
